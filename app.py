@@ -30,10 +30,53 @@ app.secret_key = SECRET_KEY
 
 # Configure database
 app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+# Detect if running on Render
+is_render = "render.com" in DATABASE_URL
+
+# Import additional config parameters for database
+import os
+
+# Get database pool configuration from environment
+pool_size = int(os.environ.get("SQLALCHEMY_POOL_SIZE", "5"))
+max_overflow = int(os.environ.get("SQLALCHEMY_MAX_OVERFLOW", "10"))
+pool_timeout = int(os.environ.get("SQLALCHEMY_POOL_TIMEOUT", "30"))
+pool_recycle = int(os.environ.get("SQLALCHEMY_POOL_RECYCLE", "300"))
+
+# Enhanced SQL engine options for production stability
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-    "pool_recycle": 300,
-    "pool_pre_ping": True,
+    # Connection pool settings from environment or defaults
+    "pool_recycle": pool_recycle,  # Recycle connections after this many seconds
+    "pool_pre_ping": True,        # Test connections before using them
+    "pool_timeout": pool_timeout,  # Seconds to wait for a connection from pool
+    "pool_size": pool_size,       # Maximum number of persistent connections
+    "max_overflow": max_overflow, # Maximum number of connections above pool_size
+    
+    # Set connection arguments for SSL if on Render
+    "connect_args": {
+        # Use SSL based on environment variable with fallback based on host
+        "sslmode": os.environ.get("SSL_MODE", "require" if is_render else "prefer"),
+        
+        # Connection retry settings
+        "connect_timeout": 10,
+        
+        # Keep-alive settings to maintain connections
+        "keepalives": 1,
+        "keepalives_idle": 30,
+        "keepalives_interval": 10,
+        "keepalives_count": 5,
+        
+        # Enhanced SSL options for Render
+        "ssl_cert_reqs": "CERT_NONE" if os.environ.get("SSL_CERT_REQS_NONE", "false").lower() == "true" else None
+    }
 }
+
+# Log database configuration
+logger.info(f"Database URL: {'PostgreSQL database' if 'postgres' in DATABASE_URL else DATABASE_URL}")
+logger.info(f"SSL Mode: {os.environ.get('SSL_MODE', 'require' if is_render else 'prefer')}")
+logger.info(f"Pool size: {pool_size}, Max overflow: {max_overflow}, Timeout: {pool_timeout}s, Recycle: {pool_recycle}s")
+logger.info(f"Max DB Retries: {os.environ.get('DB_MAX_RETRIES', '3')}, Retry Delay: {os.environ.get('DB_RETRY_DELAY', '0.5')}s")
 
 # Initialize SQLAlchemy with the Flask app
 db.init_app(app)

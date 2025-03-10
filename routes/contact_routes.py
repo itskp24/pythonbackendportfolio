@@ -57,8 +57,15 @@ def create_contact():
         )
     
     except Exception as e:
-        logger.error(f"Error in create_contact endpoint: {str(e)}")
-        return make_response(success=False, message=f"Server error: {str(e)}", status_code=500)
+        error_message = str(e)
+        logger.error(f"Error in create_contact endpoint: {error_message}")
+        
+        # User-friendly error message for production
+        return make_response(
+            success=False, 
+            message="An unexpected error occurred. Please try again later.", 
+            status_code=500
+        )
 
 @contact_bp.route('', methods=['GET'])
 @auth.login_required
@@ -94,8 +101,15 @@ def get_contacts():
         )
     
     except Exception as e:
-        logger.error(f"Error in get_contacts endpoint: {str(e)}")
-        return make_response(success=False, message=f"Server error: {str(e)}", status_code=500)
+        error_message = str(e)
+        logger.error(f"Error in get_contacts endpoint: {error_message}")
+        
+        # User-friendly error message for production
+        return make_response(
+            success=False, 
+            message="An unexpected error occurred. Please try again later.", 
+            status_code=500
+        )
 
 @contact_bp.route('/<int:contact_id>', methods=['GET'])
 @auth.login_required
@@ -126,5 +140,12 @@ def get_contact(contact_id):
         )
     
     except Exception as e:
-        logger.error(f"Error in get_contact endpoint: {str(e)}")
-        return make_response(success=False, message=f"Server error: {str(e)}", status_code=500)
+        error_message = str(e)
+        logger.error(f"Error in get_contact endpoint: {error_message}")
+        
+        # User-friendly error message for production
+        return make_response(
+            success=False, 
+            message="An unexpected error occurred. Please try again later.", 
+            status_code=500
+        )
