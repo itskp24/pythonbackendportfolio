@@ -1,0 +1,42 @@
+services:
+  - type: web
+    name: contact-form-api
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --reuse-port --workers=4 main:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DATABASE_URL
+        fromDatabase:
+          name: contact-db
+          property: connectionString
+      - key: PGHOST
+        fromDatabase:
+          name: contact-db
+          property: host
+      - key: PGPORT
+        fromDatabase:
+          name: contact-db
+          property: port
+      - key: PGUSER
+        fromDatabase:
+          name: contact-db
+          property: user
+      - key: PGPASSWORD
+        fromDatabase:
+          name: contact-db
+          property: password
+      - key: PGDATABASE
+        fromDatabase:
+          name: contact-db
+          property: database
+      - key: SESSION_SECRET
+        generateValue: true
+    healthCheckPath: /api/v1/health
+
+databases:
+  - name: contact-db
+    databaseName: contact_uni6
+    user: contact_uni6_user
+    plan: free
